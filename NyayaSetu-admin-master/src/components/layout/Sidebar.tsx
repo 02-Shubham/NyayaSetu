@@ -10,7 +10,8 @@ import {
     Settings,
     Shield,
     Activity,
-    Users
+    Users,
+    KeyRound
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { clsx, type ClassValue } from 'clsx'
@@ -26,6 +27,7 @@ const navItems = [
     { name: 'Resolved', href: '/resolved', icon: CheckCircle },
     { name: 'Escalated', href: '/escalated', icon: AlertCircle },
     { name: 'Agencies', href: '/agencies', icon: Users },
+    { name: 'Key Vault', href: '/keyvault', icon: KeyRound },
     { name: 'Network Info', href: '/network', icon: Activity },
     { name: 'Settings', href: '/settings', icon: Settings },
 ]

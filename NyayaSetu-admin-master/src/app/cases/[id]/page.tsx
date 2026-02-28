@@ -36,6 +36,7 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import { decryptWithPrivateKey, decryptFile } from '@/lib/browser-crypto'
+import { addKeyToVault, type VaultKey } from '@/app/keyvault/page'
 
 export default function CaseDetailsPage() {
     const { id } = useParams()
@@ -53,6 +54,7 @@ export default function CaseDetailsPage() {
     const [activeTab, setActiveTab] = useState<'overview' | 'ai'>('overview')
     const [isAnalyzing, setIsAnalyzing] = useState(false)
     const [aiReport, setAiReport] = useState<any>(null)
+    const [keySaved, setKeySaved] = useState(false)
 
     // Report modal state
     const [showReportModal, setShowReportModal] = useState(false)
@@ -564,6 +566,33 @@ export default function CaseDetailsPage() {
                                                         Clear Memory
                                                     </button>
                                                 </>
+                                            )}
+                                            {/* Send Key to Vault */}
+                                            {metadata?.encryptionKey && (
+                                                keySaved ? (
+                                                    <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-50 border border-green-200 rounded-lg text-xs font-bold text-green-600">
+                                                        <CheckCircle2 className="w-4 h-4" /> Key in Vault
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => {
+                                                            addKeyToVault({
+                                                                caseId: record.id,
+                                                                department: record.department,
+                                                                title: metadata?.title || record.title || `Case #${record.id}`,
+                                                                encryptionKey: metadata.encryptionKey,
+                                                                iv: metadata.iv || '',
+                                                                isAsymmetric: metadata.isAsymmetric || false,
+                                                                fileCID: metadata.fileCID || '',
+                                                                storedAt: new Date().toISOString()
+                                                            })
+                                                            setKeySaved(true)
+                                                        }}
+                                                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-xs font-bold hover:bg-amber-100 transition-all"
+                                                    >
+                                                        <KeyRound className="w-4 h-4" /> Send Key to Vault
+                                                    </button>
+                                                )
                                             )}
                                             <a
                                                 href={`https://gateway.pinata.cloud/ipfs/${metadata?.fileCID}`}

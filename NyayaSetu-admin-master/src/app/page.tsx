@@ -9,26 +9,45 @@ import {
   CheckCircle,
   AlertTriangle,
   ArrowUpRight,
-  Filter,
-  MoreVertical,
-  ExternalLink,
   Lock,
-  Activity
+  Activity,
+  TrendingUp,
+  Building2,
+  FileText,
+  Zap,
+  Eye,
+  Users,
+  Globe
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { format } from 'date-fns'
+import { format, formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
 export default function DashboardPage() {
   const { cases, isLoading, statusMap } = useCases()
   const { isAdmin } = useAdmin()
 
-  const stats = [
-    { name: 'Total Cases', value: cases.length, icon: Shield, color: 'text-brand-primary' },
-    { name: 'Under Review', value: cases.filter(c => c.status === 1 || c.status === 2).length, icon: Clock, color: 'text-brand-secondary' },
-    { name: 'Resolved', value: cases.filter(c => c.status === 4).length, icon: CheckCircle, color: 'text-brand-accent' },
-    { name: 'Escalated', value: cases.filter(c => c.status === 3).length, icon: AlertTriangle, color: 'text-red-600' },
-  ]
+  const totalCases = cases.length
+  const underReview = cases.filter(c => c.status === 1 || c.status === 2).length
+  const resolved = cases.filter(c => c.status === 4).length
+  const escalated = cases.filter(c => c.status === 3).length
+  const submitted = cases.filter(c => c.status === 0).length
+  const resolveRate = totalCases > 0 ? Math.round((resolved / totalCases) * 100) : 0
+
+  // Department breakdown
+  const deptCounts: Record<string, number> = {}
+  cases.forEach(c => { deptCounts[c.department] = (deptCounts[c.department] || 0) + 1 })
+  const deptList = Object.entries(deptCounts).sort((a, b) => b[1] - a[1])
+  const deptColors: Record<string, string> = {
+    'Police': 'bg-blue-500',
+    'Cyber Crime': 'bg-violet-500',
+    'Anti-Corruption Bureau': 'bg-amber-500',
+    'Ministry of Finance': 'bg-emerald-500',
+    'Human Rights': 'bg-rose-500',
+  }
+
+  // Recent cases (last 5)
+  const recentCases = [...cases].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 5)
 
   if (!isAdmin && !isLoading) {
     return (
@@ -48,200 +67,281 @@ export default function DashboardPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-12">
-        {/* Welcome Header */}
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 bg-brand-primary text-white text-[8px] font-black uppercase tracking-[0.3em] rounded-full shadow-lg">
-              COMMAND_CENTER
-            </span>
-            <span className="text-text-muted text-[8px] font-mono tracking-widest uppercase font-bold">REGISTRY_ACTIVE</span>
+      <div className="space-y-8">
+        {/* ═══════════════ HEADER ═══════════════ */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="px-3 py-1.5 bg-brand-primary text-white text-[9px] font-bold uppercase tracking-[0.2em] rounded-full shadow-md">
+                Command Center
+              </span>
+              <span className="flex items-center gap-1.5 text-[10px] text-text-muted font-mono">
+                <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse" /> Registry Active
+              </span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-text-main tracking-tight">
+              Legal Intelligence Dashboard
+            </h1>
+            <p className="text-sm text-text-muted mt-1 max-w-xl">
+              Real-time overview of whistleblower evidence and case progression across the decentralized legal network.
+            </p>
           </div>
-          <h1 className="text-6xl md:text-7xl font-black tracking-tight text-text-main uppercase leading-none">Legal Intelligence <br /><span className="text-text-muted italic">DASHBOARD</span></h1>
-          <p className="text-lg text-text-muted font-normal max-w-2xl leading-relaxed">Real-time overview of whistleblower evidence and case progression across the decentralized legal network.</p>
+          <div className="flex items-center gap-3">
+            <Link href="/cases"
+              className="px-5 py-2.5 bg-brand-primary text-white rounded-xl text-xs font-bold hover:bg-brand-secondary transition-all flex items-center gap-2 shadow-md"
+            >
+              <Eye className="w-3.5 h-3.5" /> View All Cases
+            </Link>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat, i) => (
+        {/* ═══════════════ STATS ROW ═══════════════ */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {[
+            { label: 'Total Cases', value: totalCases, icon: Shield, color: 'text-brand-primary', bg: 'bg-brand-primary/5', border: 'border-brand-primary/10' },
+            { label: 'New / Pending', value: submitted, icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+            { label: 'Under Review', value: underReview, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+            { label: 'Resolved', value: resolved, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
+            { label: 'Escalated', value: escalated, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+          ].map((stat, i) => (
             <motion.div
-              key={stat.name}
-              initial={{ opacity: 0, y: 20 }}
+              key={stat.label}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="glass-card p-10 group hover:border-brand-primary/30 transition-all shadow-xl"
+              transition={{ delay: i * 0.07 }}
+              className={`${stat.bg} border ${stat.border} rounded-2xl p-5 group hover:shadow-md transition-all`}
             >
-              <div className="flex items-center justify-between mb-8">
-                <div className={`p-4 rounded-2xl bg-bg-page border border-border-subtle group-hover:border-brand-primary/20 transition-all`}>
-                  <stat.icon className={`w-8 h-8 ${stat.color} group-hover:scale-110 transition-transform`} />
+              <div className="flex items-center justify-between mb-3">
+                <div className={`p-2 rounded-xl bg-white/80 border ${stat.border}`}>
+                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
-                <div className="flex items-center gap-2 text-[8px] font-black text-text-muted uppercase tracking-[0.3em]">
-                  Live <div className={`w-2 h-2 rounded-full ${stat.name === 'Escalated' ? 'bg-red-600' : 'bg-brand-accent'} animate-pulse shadow-sm`} />
-                </div>
+                <span className="flex items-center gap-1 text-[8px] font-bold text-text-muted uppercase tracking-widest">
+                  Live <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
+                </span>
               </div>
-              <div className="text-7xl font-black text-text-main tracking-tighter mb-2 leading-none">{isLoading ? '...' : stat.value}</div>
-              <div className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">{stat.name}</div>
+              <div className={`text-3xl font-bold ${stat.color} tracking-tight mb-0.5`}>
+                {isLoading ? '—' : stat.value}
+              </div>
+              <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{stat.label}</div>
             </motion.div>
           ))}
         </div>
 
-        {/* Live Pulse & Case Registry */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Case List */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-3xl font-black text-text-main uppercase tracking-tight flex items-center gap-4">
-                RECENT CASES
-                <span className="px-4 py-1.5 rounded-full bg-slate-100 border border-border-subtle text-[10px] text-text-muted font-mono uppercase tracking-widest font-bold shadow-sm">
-                  {cases.length} Total_Records
-                </span>
+        {/* ═══════════════ MAIN GRID ═══════════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* ─── Recent Cases Table ─── */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-text-main flex items-center gap-2">
+                <Zap className="w-4 h-4 text-brand-primary" /> Recent Cases
               </h2>
-              <div className="flex items-center gap-4">
-                <button className="flex items-center gap-3 px-6 py-3 bg-white border border-border-subtle rounded-full text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-brand-primary transition-all hover:bg-slate-50 shadow-sm">
-                  <Filter className="w-4 h-4 text-brand-primary" /> Filter
-                </button>
-              </div>
+              <Link href="/cases" className="text-[10px] font-bold text-brand-primary hover:underline uppercase tracking-wider flex items-center gap-1">
+                View All <ArrowUpRight className="w-3 h-3" />
+              </Link>
             </div>
 
-            <div className="document-card overflow-hidden shadow-2xl">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-border-subtle bg-slate-50">
-                      <th className="px-10 py-6 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Hash_ID</th>
-                      <th className="px-10 py-6 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Origin</th>
-                      <th className="px-10 py-6 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Authority</th>
-                      <th className="px-10 py-6 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Lifecycle</th>
-                      <th className="px-10 py-6 text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">State</th>
-                      <th className="px-10 py-6 text-right"></th>
+            <div className="bg-white border border-border-subtle rounded-2xl overflow-hidden shadow-sm">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-border-subtle bg-slate-50/80">
+                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Reporter</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Department</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Filed</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {isLoading ? (
+                    [...Array(4)].map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td colSpan={6} className="px-6 py-5"><div className="h-4 bg-slate-100 rounded-lg" /></td>
+                      </tr>
+                    ))
+                  ) : recentCases.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center">
+                        <Shield className="w-8 h-8 text-text-muted/20 mx-auto mb-3" />
+                        <p className="text-sm text-text-muted">No cases filed yet.</p>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border-subtle">
-                    {isLoading ? (
-                      [...Array(5)].map((_, i) => (
-                        <tr key={i} className="animate-pulse">
-                          <td colSpan={6} className="px-6 py-6 h-16 bg-slate-50" />
-                        </tr>
-                      ))
-                    ) : (
-                      cases.map((record) => (
-                        <tr key={record.id} className="group hover:bg-slate-50 transition-colors border-b border-border-subtle last:border-0">
-                          <td className="px-10 py-8">
-                            <span className="text-lg font-mono font-black text-brand-primary tracking-tighter">#{record.id.toString().padStart(4, '0')}</span>
-                          </td>
-                          <td className="px-10 py-8 whitespace-nowrap">
-                            <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-2xl bg-brand-primary/5 border border-brand-primary/10 flex items-center justify-center text-[10px] font-black text-brand-primary uppercase tracking-widest">
-                                {record.creator.slice(2, 4).toUpperCase()}
-                              </div>
-                              <span className="text-[10px] font-mono text-text-muted font-bold uppercase tracking-wider">
-                                {record.creator.slice(0, 10)}...
-                              </span>
+                  ) : (
+                    recentCases.map((record, i) => (
+                      <motion.tr
+                        key={record.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="group hover:bg-slate-50/50 transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <span className="text-sm font-bold text-brand-primary font-mono">#{record.id.toString().padStart(3, '0')}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-brand-primary/5 border border-brand-primary/10 flex items-center justify-center text-[9px] font-bold text-brand-primary">
+                              {record.creator.slice(2, 4).toUpperCase()}
                             </div>
-                          </td>
-                          <td className="px-10 py-8 whitespace-nowrap">
-                            <span className="px-3 py-1 rounded-full bg-slate-100 border border-border-subtle text-[10px] text-text-muted font-black uppercase tracking-widest">
-                              {record.department}
+                            <span className="text-[10px] font-mono text-text-muted">
+                              {record.creator.slice(0, 6)}…{record.creator.slice(-4)}
                             </span>
-                          </td>
-                          <td className="px-10 py-8 whitespace-nowrap">
-                            <span className="text-[10px] font-mono text-text-muted font-bold uppercase tracking-widest">
-                              {format(record.timestamp, 'dd_MM_yyyy HH:mm')}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-border-subtle text-[10px] text-text-muted font-bold">
+                            {record.department}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[10px] text-text-muted">
+                            {formatDistanceToNow(record.timestamp, { addSuffix: true })}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${record.status === 4 ? 'bg-green-500' :
+                                record.status === 3 ? 'bg-red-500' :
+                                  record.status === 5 ? 'bg-gray-400' :
+                                    record.status === 0 ? 'bg-blue-400' : 'bg-amber-400'
+                              }`} />
+                            <span className="text-[10px] font-bold text-text-main uppercase tracking-wider">
+                              {statusMap[record.status]}
                             </span>
-                          </td>
-                          <td className="px-10 py-8 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-2.5 h-2.5 rounded-full ${record.status === 4 ? 'bg-brand-accent shadow-sm' :
-                                record.status === 3 ? 'bg-red-600 shadow-sm' :
-                                  record.status === 0 ? 'bg-slate-300' : 'bg-brand-primary'
-                                }`} />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-text-main leading-none">
-                                {statusMap[record.status]}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-10 py-8 text-right">
-                            <Link
-                              href={`/cases/${record.id}`}
-                              className="p-3 inline-flex items-center justify-center rounded-2xl bg-slate-100 border border-border-subtle hover:border-brand-primary/30 text-text-muted hover:text-brand-primary transition-all group/btn shadow-sm"
-                            >
-                              <ArrowUpRight className="w-5 h-5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
-                            </Link>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-                {!isLoading && cases.length === 0 && (
-                  <div className="p-12 text-center">
-                    <p className="text-text-muted text-sm font-medium">No cases reported yet in the legal registry.</p>
-                  </div>
-                )}
-              </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Link
+                            href={`/cases/${record.id}`}
+                            className="p-2 inline-flex rounded-xl bg-slate-50 border border-border-subtle hover:border-brand-primary/30 text-text-muted hover:text-brand-primary transition-all group/btn"
+                          >
+                            <ArrowUpRight className="w-4 h-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                          </Link>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Right Sidebar: Live Justice Pulse */}
-          <div className="space-y-6">
-            <div className="document-card p-10 bg-white relative overflow-hidden shadow-2xl">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 blur-[60px] -mr-16 -mt-16" />
-              <div className="flex items-center justify-between mb-10 border-b border-border-subtle pb-6">
-                <h3 className="text-[10px] font-black text-brand-primary uppercase tracking-[0.3em] flex items-center gap-3">
-                  <Activity className="w-5 h-5 animate-pulse" /> Justice Pulse
+          {/* ─── Right Sidebar ─── */}
+          <div className="space-y-5">
+
+            {/* Resolution Rate */}
+            <div className="bg-white border border-border-subtle rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-brand-primary" /> Resolution Rate
                 </h3>
-                <div className="text-[8px] font-mono text-text-muted uppercase tracking-widest font-bold">ENCRYPTED_FEED</div>
+                <span className="text-2xl font-bold text-text-main">{isLoading ? '—' : `${resolveRate}%`}</span>
               </div>
-
-              <div className="space-y-6 font-mono text-[9px]">
-                {[
-                  { time: '18:15:05', event: 'CONTRACT_SYNC', status: 'OK' },
-                  { time: '18:12:22', event: 'NEW_CASE_FILED', status: '#128' },
-                  { time: '18:10:30', event: 'METADATA_ANCHORED', status: 'IPFS' },
-                  { time: '18:05:12', event: 'AUTH_KEY_ROTATED', status: 'POLICE' },
-                  { time: '18:02:55', event: 'DMS_ARMED', status: 'SECURE' },
-                ].map((log, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex items-center gap-4 border-l-2 border-slate-100 pl-4 py-1"
-                  >
-                    <span className="text-text-muted font-bold">{log.time}</span>
-                    <span className="text-text-main font-black uppercase tracking-widest">{log.event}</span>
-                    <span className="ml-auto text-brand-primary font-black">{log.status}</span>
-                  </motion.div>
-                ))}
+              <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${resolveRate}%` }}
+                  transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
+                  className="h-full bg-gradient-to-r from-brand-primary to-brand-accent rounded-full"
+                />
               </div>
-
-              <div className="mt-10 pt-8 border-t border-border-subtle space-y-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] text-text-muted font-black uppercase tracking-widest">Network Health</span>
-                  <span className="text-[9px] text-brand-accent font-black tracking-widest">OPTIMAL_v4</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] text-text-muted font-black uppercase tracking-widest">Registry Status</span>
-                  <span className="text-[9px] text-brand-primary font-black italic tracking-widest uppercase">Synced</span>
-                </div>
+              <div className="flex justify-between mt-2">
+                <span className="text-[9px] text-text-muted font-mono">{resolved} resolved</span>
+                <span className="text-[9px] text-text-muted font-mono">{totalCases} total</span>
               </div>
             </div>
 
-            <div className="document-card p-10 bg-slate-50 border-brand-primary/10 shadow-lg">
-              <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-8">SECURITY_INFRA</h3>
-              <div className="space-y-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-2.5 h-2.5 rounded-full bg-brand-accent shadow-sm" />
-                  <span className="text-[10px] font-black text-text-main uppercase tracking-widest">RSA-4096 Vault Active</span>
+            {/* Department Breakdown */}
+            <div className="bg-white border border-border-subtle rounded-2xl p-6 shadow-sm">
+              <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2 mb-5">
+                <Building2 className="w-4 h-4 text-brand-primary" /> By Department
+              </h3>
+              {deptList.length === 0 ? (
+                <p className="text-[10px] text-text-muted text-center py-4">No cases yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {deptList.map(([dept, count]) => {
+                    const pct = totalCases > 0 ? Math.round((count / totalCases) * 100) : 0
+                    return (
+                      <div key={dept}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-bold text-text-main">{dept}</span>
+                          <span className="text-[10px] text-text-muted font-mono">{count} ({pct}%)</span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
+                            className={`h-full rounded-full ${deptColors[dept] || 'bg-brand-primary'}`}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-2.5 h-2.5 rounded-full bg-brand-accent shadow-sm" />
-                  <span className="text-[10px] font-black text-text-main uppercase tracking-widest">AES-256 GCM Shield</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-300 shadow-sm" />
-                  <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">IPFS Pins Verified</span>
-                </div>
+              )}
+            </div>
+
+            {/* Live Activity Feed */}
+            <div className="bg-white border border-border-subtle rounded-2xl p-6 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/3 blur-[40px] -mr-8 -mt-8" />
+              <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2 mb-5">
+                <Activity className="w-4 h-4 text-brand-primary animate-pulse" /> Live Feed
+              </h3>
+              <div className="space-y-3">
+                {isLoading ? (
+                  [...Array(4)].map((_, i) => (
+                    <div key={i} className="h-8 bg-slate-50 rounded-lg animate-pulse" />
+                  ))
+                ) : recentCases.length === 0 ? (
+                  <p className="text-[10px] text-text-muted text-center py-4">Waiting for activity…</p>
+                ) : (
+                  recentCases.slice(0, 4).map((c, i) => (
+                    <motion.div
+                      key={c.id}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                      className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/80 border border-border-subtle hover:border-brand-primary/10 transition-colors"
+                    >
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${c.status === 4 ? 'bg-green-500' :
+                          c.status === 3 ? 'bg-red-500' :
+                            c.status === 0 ? 'bg-blue-400' : 'bg-amber-400'
+                        }`} />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-bold text-text-main">Case #{c.id}</span>
+                        <span className="text-[9px] text-text-muted ml-1.5">{c.department}</span>
+                      </div>
+                      <span className="text-[9px] text-text-muted font-mono shrink-0">
+                        {formatDistanceToNow(c.timestamp, { addSuffix: false })}
+                      </span>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Security Infrastructure */}
+            <div className="bg-slate-50 border border-border-subtle rounded-2xl p-6 shadow-sm">
+              <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2 mb-4">
+                <Globe className="w-4 h-4 text-brand-primary" /> Security Infra
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { label: 'RSA-2048 Key Vault', active: true },
+                  { label: 'AES-256-GCM Encryption', active: true },
+                  { label: 'IPFS Decentralized Store', active: true },
+                  { label: 'Dead Man Switch Armed', active: true },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${item.active ? 'bg-brand-accent' : 'bg-gray-300'} shadow-sm`} />
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${item.active ? 'text-text-main' : 'text-text-muted'}`}>
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
