@@ -18,7 +18,8 @@ import {
     Copy,
     Check,
     RefreshCw,
-    ExternalLink
+    ExternalLink,
+    Trash2
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useCallback } from 'react'
@@ -98,13 +99,28 @@ export default function AgenciesPage() {
     const { writeContract, data: hash, isPending, error: writeError } = useWriteContract()
     const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
 
-    // Re-fetch registry after successful tx
+    // Remove agency hook
+    const { writeContract: writeRemove, data: removeHash, isPending: isRemoving, error: removeError } = useWriteContract()
+    const { isLoading: isRemoveConfirming, isSuccess: isRemoveSuccess } = useWaitForTransactionReceipt({ hash: removeHash })
+    const [removingDept, setRemovingDept] = useState<string | null>(null)
+
+    // Re-fetch registry after successful add or remove
     useEffect(() => {
-        if (isSuccess) {
-            const timer = setTimeout(() => fetchRegistry(), 1500)
+        if (isSuccess || isRemoveSuccess) {
+            const timer = setTimeout(() => { fetchRegistry(); setRemovingDept(null) }, 1500)
             return () => clearTimeout(timer)
         }
-    }, [isSuccess, fetchRegistry])
+    }, [isSuccess, isRemoveSuccess, fetchRegistry])
+
+    const handleRemoveAgency = (entry: RegistryEntry) => {
+        setRemovingDept(entry.department)
+        writeRemove({
+            address: addressConfig.CivicChainRegistry as `0x${string}`,
+            abi: RegistryABI.abi,
+            functionName: 'removeAgency',
+            args: [entry.address as `0x${string}`, entry.department],
+        })
+    }
 
     // Check if a specific address is authorized
     const checkAuth = (addr: string) => {
@@ -394,16 +410,29 @@ export default function AgenciesPage() {
                                             </td>
                                             <td className="px-8 py-5 text-right">
                                                 {entry.isActive && (
-                                                    <button
-                                                        onClick={() => handleCopy(entry.address)}
-                                                        className="p-2 rounded-lg hover:bg-bg-page transition-colors inline-flex"
-                                                        title="Copy address"
-                                                    >
-                                                        {copied === entry.address
-                                                            ? <Check className="w-3.5 h-3.5 text-brand-accent" />
-                                                            : <Copy className="w-3.5 h-3.5 text-text-muted" />
-                                                        }
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <button
+                                                            onClick={() => handleCopy(entry.address)}
+                                                            className="p-2 rounded-lg hover:bg-bg-page transition-colors inline-flex"
+                                                            title="Copy address"
+                                                        >
+                                                            {copied === entry.address
+                                                                ? <Check className="w-3.5 h-3.5 text-brand-accent" />
+                                                                : <Copy className="w-3.5 h-3.5 text-text-muted" />
+                                                            }
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRemoveAgency(entry)}
+                                                            disabled={isRemoving || isRemoveConfirming}
+                                                            className="p-2 rounded-lg hover:bg-red-50 transition-colors inline-flex group"
+                                                            title="Remove agency"
+                                                        >
+                                                            {(isRemoving || isRemoveConfirming) && removingDept === entry.department
+                                                                ? <Loader2 className="w-3.5 h-3.5 text-red-400 animate-spin" />
+                                                                : <Trash2 className="w-3.5 h-3.5 text-text-muted group-hover:text-red-500 transition-colors" />
+                                                            }
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </td>
                                         </tr>

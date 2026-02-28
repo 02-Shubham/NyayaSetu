@@ -54,6 +54,12 @@ contract CivicChainRegistry {
         departmentToAgency[department] = agency;
     }
 
+    function removeAgency(address agency, string memory department) external onlyAdmin {
+        authorizedAgencies[agency] = false;
+        departmentToAgency[department] = address(0);
+        agencyPublicKeys[agency] = "";
+    }
+
     function registerAgencyDetails(string memory department, string memory publicKey) external onlyAgency {
         agencyPublicKeys[msg.sender] = publicKey;
         departmentToAgency[department] = msg.sender;

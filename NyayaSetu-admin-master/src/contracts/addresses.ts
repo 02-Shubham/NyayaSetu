@@ -1,9 +1,9 @@
 ﻿export const addressConfig = {
-  WhistleblowerPortal: "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-  ShadowVault: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-  CivicChainRegistry: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-  DeadManSwitch: "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-  Groth16Verifier: "0x0000000000000000000000000000000000000000",
+  WhistleblowerPortal: "0x59b670e9fA9D0A427751Af201D676719a970857b",
+  ShadowVault: "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f",
+  CivicChainRegistry: "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
+  DeadManSwitch: "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
+  Groth16Verifier: "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
   network: "localhost",
   chainId: 1337
 } as const
