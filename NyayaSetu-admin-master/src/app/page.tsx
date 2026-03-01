@@ -47,7 +47,7 @@ export default function DashboardPage() {
   }
 
   // Recent cases (last 5)
-  const recentCases = [...cases].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 5)
+  const recentCases = [...cases].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5)
 
   if (!isAdmin && !isLoading) {
     return (
@@ -202,9 +202,9 @@ export default function DashboardPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <span className={`w-2 h-2 rounded-full ${record.status === 4 ? 'bg-green-500' :
-                                record.status === 3 ? 'bg-red-500' :
-                                  record.status === 5 ? 'bg-gray-400' :
-                                    record.status === 0 ? 'bg-blue-400' : 'bg-amber-400'
+                              record.status === 3 ? 'bg-red-500' :
+                                record.status === 5 ? 'bg-gray-400' :
+                                  record.status === 0 ? 'bg-blue-400' : 'bg-amber-400'
                               }`} />
                             <span className="text-[10px] font-bold text-text-main uppercase tracking-wider">
                               {statusMap[record.status]}
@@ -307,8 +307,8 @@ export default function DashboardPage() {
                       className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/80 border border-border-subtle hover:border-brand-primary/10 transition-colors"
                     >
                       <div className={`w-2 h-2 rounded-full shrink-0 ${c.status === 4 ? 'bg-green-500' :
-                          c.status === 3 ? 'bg-red-500' :
-                            c.status === 0 ? 'bg-blue-400' : 'bg-amber-400'
+                        c.status === 3 ? 'bg-red-500' :
+                          c.status === 0 ? 'bg-blue-400' : 'bg-amber-400'
                         }`} />
                       <div className="flex-1 min-w-0">
                         <span className="text-[10px] font-bold text-text-main">Case #{c.id}</span>
