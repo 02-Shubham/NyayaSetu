@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/HeroSection";
 import { FeatureSection } from "@/components/FeatureSection";
+import { VerifyBot } from "@/components/VerifyBot";
 
 export default function Home() {
   return (
@@ -12,6 +13,8 @@ export default function Home() {
         <HeroSection />
         <FeatureSection />
       </div>
+
+      <VerifyBot />
     </main>
   );
 }
