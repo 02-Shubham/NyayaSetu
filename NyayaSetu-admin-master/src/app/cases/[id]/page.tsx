@@ -63,6 +63,7 @@ export default function CaseDetailsPage() {
     const [reportFindings, setReportFindings] = useState('')
     const [reportFile, setReportFile] = useState<File | null>(null)
     const [reportError, setReportError] = useState<string | null>(null)
+    const [isVerifyingReport, setIsVerifyingReport] = useState(false)
     const [submittedReport, setSubmittedReport] = useState<{
         action: string
         summary: string
@@ -123,7 +124,7 @@ export default function CaseDetailsPage() {
         setShowReportModal(true)
     }
 
-    const handleSubmitReport = () => {
+    const handleSubmitReport = async () => {
         if (!reportSummary.trim()) {
             setReportError('Report summary is required before proceeding.')
             return
@@ -131,6 +132,30 @@ export default function CaseDetailsPage() {
         if (reportSummary.trim().length < 20) {
             setReportError('Report summary must be at least 20 characters.')
             return
+        }
+
+        if (reportFile) {
+            setIsVerifyingReport(true)
+            setReportError(null)
+            try {
+                const formData = new FormData();
+                formData.append("file", reportFile);
+                const res = await fetch("/api/verify-document", { method: "POST", body: formData });
+                if (!res.ok) throw new Error("Failed to verify document");
+                
+                const data = await res.json();
+                if (data.isValid === false) {
+                    setIsVerifyingReport(false);
+                    setReportError('The report submitted does not look valid or genuine. AI verification failed.');
+                    return;
+                }
+            } catch (err) {
+                console.error("AI verify error", err);
+                setIsVerifyingReport(false);
+                setReportError('Unable to verify document authenticity. Please try again.');
+                return;
+            }
+            setIsVerifyingReport(false);
         }
 
         // Store the report
@@ -232,11 +257,11 @@ export default function CaseDetailsPage() {
                     {showDecryptModal && (
                         <>
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-6"
+                                className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-60 flex items-center justify-center p-6"
                                 onClick={() => setShowDecryptModal(false)}
                             />
                             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg z-[70] p-4 pointer-events-none"
+                                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg z-70 p-4 pointer-events-none"
                             >
                                 <div className="bg-white border border-brand-primary/20 rounded-3xl p-8 shadow-2xl pointer-events-auto">
                                     <div className="flex items-center gap-3 mb-6">
@@ -281,11 +306,11 @@ export default function CaseDetailsPage() {
                     {showReportModal && (
                         <>
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60]"
+                                className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-60"
                                 onClick={() => setShowReportModal(false)}
                             />
                             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-[70] p-4 pointer-events-none"
+                                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl z-70 p-4 pointer-events-none"
                             >
                                 <div className="bg-white border border-border-subtle rounded-3xl shadow-2xl pointer-events-auto overflow-hidden">
                                     {/* Modal Header */}
@@ -417,14 +442,14 @@ export default function CaseDetailsPage() {
                                         </button>
                                         <button
                                             onClick={handleSubmitReport}
-                                            disabled={!reportSummary.trim() || reportSummary.trim().length < 20}
+                                            disabled={!reportSummary.trim() || reportSummary.trim().length < 20 || isVerifyingReport}
                                             className={`px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${reportAction === 4
                                                 ? 'bg-brand-accent hover:bg-green-600 text-white shadow-md'
                                                 : 'bg-red-500 hover:bg-red-600 text-white shadow-md'
                                                 }`}
                                         >
-                                            {reportAction === 4 ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                                            Submit Report & {reportAction === 4 ? 'Resolve' : 'Reject'} Case
+                                            {isVerifyingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : (reportAction === 4 ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />)}
+                                            {isVerifyingReport ? 'Verifying...' : `Submit Report & ${reportAction === 4 ? 'Resolve' : 'Reject'} Case`}
                                         </button>
                                     </div>
                                 </div>
@@ -782,7 +807,7 @@ export default function CaseDetailsPage() {
                             </div>
                         ) : isAnalyzing ? (
                             <div className="glass-card p-12 flex flex-col items-center justify-center border-brand-primary/30 bg-brand-primary/5 relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-b from-brand-primary/5 to-transparent pointer-events-none" />
+                                <div className="absolute inset-0 bg-linear-to-b from-brand-primary/5 to-transparent pointer-events-none" />
                                 <motion.div
                                     animate={{
                                         y: [0, 400, 0],

@@ -13,6 +13,7 @@ import { useAccount, usePublicClient } from "wagmi";
 import { useCivicChainRegistry } from "@/hooks/useCivicChainRegistry";
 import { useDeadManSwitch } from "@/hooks/useDeadManSwitch";
 import { generateFileHash, encryptFile, encryptWithPublicKey } from "@/lib/browser-crypto";
+import { verifyAndScrubImage, ImageVerificationError } from "@/lib/image-verification";
 import { ConnectButton } from "@/components/wallet/ConnectButton";
 import CivicChainRegistryABI from '@blockchain/artifacts/contracts/CivicChainRegistry.sol/CivicChainRegistry.json';
 import { Navbar } from "@/components/Navbar";
@@ -36,11 +37,11 @@ function PrivacyGuardModal({ onProceed }: { onProceed: () => void }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/30 backdrop-blur-lg flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-100 bg-black/30 backdrop-blur-lg flex items-center justify-center p-4">
       <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         className="bg-white border border-border-subtle rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
       >
-        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-brand-primary/40 to-transparent" />
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-linear-to-r from-transparent via-brand-primary/40 to-transparent" />
 
         <div className="flex flex-col items-center mb-6">
           <div className="p-3 bg-brand-primary/10 rounded-xl mb-4">
@@ -88,7 +89,7 @@ function PrivacyGuardModal({ onProceed }: { onProceed: () => void }) {
 // ─── Hacker Loading Sequence ──────────────────────────────────────────────────
 function HackerLoader({ step, logs }: { step: string; logs: string[] }) {
   return (
-    <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-2xl flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-110 bg-black/40 backdrop-blur-2xl flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -317,6 +318,23 @@ export default function SubmitCasePage() {
     if (!file) { setError("Attach encrypted evidence payload."); setIsSubmitting(false); return; }
 
     try {
+      addLog("Verifying Evidence Authenticity...");
+      let finalFileToEncrypt = file;
+      
+      try {
+          finalFileToEncrypt = await verifyAndScrubImage(file);
+          addLog("✓ Authenticity Verified. EXIF Stripped.");
+      } catch (verifErr: any) {
+          if (verifErr instanceof ImageVerificationError) {
+              setStep("form");
+              setIsSubmitting(false);
+              setError(verifErr.message);
+              return;
+          }
+          console.warn("Non-fatal verification error:", verifErr);
+          addLog("! Verification skipped (Unsupported Format). Privacy layer enabled.");
+      }
+
       setStep("encrypting");
       addLog("Initializing secure tunnel...");
       await new Promise(r => setTimeout(r, 800));
@@ -336,10 +354,10 @@ export default function SubmitCasePage() {
       }
 
       addLog("Generating AES_256_GCM session keys...");
-      const { encryptedBlob, encryptionKeyHex, ivHex } = await encryptFile(file);
+      const { encryptedBlob, encryptionKeyHex, ivHex } = await encryptFile(finalFileToEncrypt);
       addLog("Shredding local session memory.");
 
-      const fileHash = await generateFileHash(file);
+      const fileHash = await generateFileHash(finalFileToEncrypt);
       addLog(`Integrity Proof: ${fileHash.slice(0, 16)}...`);
 
       let securedKey = encryptionKeyHex;
@@ -371,8 +389,8 @@ export default function SubmitCasePage() {
         encryptionKey: securedKey,
         iv: ivHex,
         isAsymmetric: !!agencyPublicKey,
-        fileName: file.name,
-        fileType: file.type,
+        fileName: finalFileToEncrypt.name,
+        fileType: finalFileToEncrypt.type,
         timestamp: Date.now()
       };
 
