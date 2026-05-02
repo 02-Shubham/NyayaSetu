@@ -473,7 +473,7 @@ export default function SubmitCasePage() {
         <Navbar />
 
         <div className="w-full max-w-[1500px] relative z-10 pt-4">
-          <Link href="/" className="inline-flex items-center gap-3 text-text-muted hover:text-brand-primary transition-all mb-12 text-[10px] font-black uppercase tracking-[0.2em]">
+          <Link href="/" className="inline-flex items-center gap-3 text-text-muted hover:text-brand-primary transition-all m-6 text-[10px] font-black uppercase tracking-[0.2em]">
             <ArrowLeft className="w-4 h-4" /> Back to Intelligence
           </Link>
 
@@ -490,9 +490,9 @@ export default function SubmitCasePage() {
                   <div className="p-4 bg-brand-primary/10 rounded-2xl border border-brand-primary/20">
                     <Shield className="w-10 h-10 text-brand-primary" />
                   </div>
-                  <h1 className="text-6xl md:text-7xl font-black tracking-tighter text-text-main uppercase leading-none">Secure Archive</h1>
+                  <h1 className="text-6xl md:text-7xl font-black tracking-tighter text-text-main  leading-none">Secure Archive</h1>
                 </div>
-                <p className="text-xl text-text-muted font-light max-w-2xl leading-relaxed">
+                <p className="text-lg text-text-muted font-light max-w-3xl leading-relaxed">
                   Initiate the high-stakes submission tunnel. Evidence is encrypted client-side using <span className="text-text-main font-medium">AES_256_GCM</span> before network transmission.
                 </p>
               </div>
@@ -510,7 +510,7 @@ export default function SubmitCasePage() {
                 </motion.div>
               )}
 
-              <motion.form
+              {/* <motion.form
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 className={`space-y-8 ${!isConnected ? "opacity-30 pointer-events-none grayscale" : ""}`}
@@ -616,6 +616,152 @@ export default function SubmitCasePage() {
                     </div>
                   </div>
                 </div>
+              </motion.form> */}
+              <motion.form
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className={`space-y-6 ${!isConnected ? "opacity-30 pointer-events-none grayscale" : ""}`}
+                onSubmit={handleSubmit}
+              >
+                {error && (
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-600 text-xs font-medium leading-relaxed">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    {error}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+                  {/* LEFT COLUMN */}
+                  <div className="md:col-span-7 space-y-6">
+                    <div className="bg-white border border-border-subtle rounded-2xl divide-y divide-border-subtle shadow-sm">
+
+                      {/* Title Field */}
+                      <div className="px-6 py-5 space-y-2">
+                      <label className="block text-[9px] font-black uppercase tracking-[0.28em] text-text-muted">
+                        Investigation Title
+                      </label>
+                      <input
+                        name="title"
+                        required
+                        type="text"
+                        placeholder="Case title..."
+                        className="w-full bg-transparent text-sm text-text-main font-medium placeholder:text-text-muted/40 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Narrative Field */}
+                    <div className="px-6 py-5 space-y-2">
+                      <label className="block text-[9px] font-black uppercase tracking-[0.28em] text-text-muted">
+                        Full Investigative Narrative
+                      </label>
+                      <textarea
+                        name="description"
+                        required
+                        rows={6}
+                        placeholder="Detailed report of events and supporting context..."
+                        className="w-full bg-transparent text-sm text-text-main font-normal placeholder:text-text-muted/40 focus:outline-none resize-none leading-relaxed"
+                      />
+                    </div>
+                  </div>
+
+                  <DeadManSwitchPanel
+                    enabled={dmsEnabled}
+                    setEnabled={setDmsEnabled}
+                    releaseDate={dmsReleaseDate}
+                    setReleaseDate={setDmsReleaseDate}
+                    statement={dmsStatement}
+                    setStatement={setDmsStatement}
+                  />
+                 </div>
+
+                    {/* RIGHT COLUMN */}
+                    <div className="md:col-span-5 space-y-4">
+                      <div className="bg-white border border-border-subtle rounded-2xl divide-y divide-border-subtle shadow-sm">
+
+                        {/* Department Select */}
+                        <div className="px-6 py-5 space-y-2">
+                          <label className="block text-[9px] font-black uppercase tracking-[0.28em] text-text-muted">
+                            Target Agency
+                          </label>
+                          <select
+                            name="department"
+                            required
+                            value={selectedDept}
+                            onChange={(e) => setSelectedDept(e.target.value)}
+                            className="w-full bg-transparent text-xs font-bold uppercase tracking-widest text-text-main appearance-none focus:outline-none cursor-pointer"
+                          >
+                            <option value="" disabled>Select Authority...</option>
+                            <option value="Police">National Police Bureau</option>
+                            <option value="Cyber Crime">Cyber Crime Division</option>
+                            <option value="Anti-Corruption Bureau">Anti-Corruption Bureau</option>
+                            <option value="Ministry of Finance">Ministry of Finance</option>
+                            <option value="Human Rights">Human Rights Commission</option>
+                          </select>
+                        </div>
+
+                        {/* File Upload */}
+                        <div className="px-6 py-5 space-y-2">
+                          <label className="block text-[9px] font-black uppercase tracking-[0.28em] text-text-muted">
+                            Payload Upload
+                          </label>
+                          <div className="relative group mt-1">
+                            <input
+                              type="file"
+                              required
+                              className="absolute inset-0 opacity-0 cursor-pointer z-20 w-full h-full"
+                              onChange={(e) => setFile(e.target.files?.[0] || null)}
+                            />
+                            <div className="flex items-center gap-3 border border-dashed border-border-subtle rounded-xl px-4 py-3.5 group-hover:border-brand-primary/40 group-hover:bg-brand-primary/[0.02] transition-all">
+                              <div className="w-8 h-8 rounded-lg bg-brand-primary/8 flex items-center justify-center shrink-0 group-hover:bg-brand-primary/12 transition-colors">
+                                <Upload className="w-3.5 h-3.5 text-brand-primary" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-text-main truncate">
+                                   {file ? file.name : "Attach Evidence"}
+                                </p>
+                                <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mt-0.5">
+                                   Local_Enc_Ready
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Protocol Guarantees */}
+                        <div className="px-6 py-4 flex items-center gap-6">
+                          <div className="flex items-center gap-2 text-[9px] font-mono text-text-muted uppercase tracking-widest">
+                            <Scale className="w-3 h-3 text-brand-primary/60" />
+                            15-day SLA
+                          </div>
+                          <div className="flex items-center gap-2 text-[9px] font-mono text-text-muted uppercase tracking-widest">
+            <Lock className="w-3 h-3 text-brand-primary/60" />
+            Client-Side Enc
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Submit Button */}
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full py-4 rounded-xl flex items-center justify-center gap-2.5 transition-all font-black uppercase tracking-[0.25em] text-[10px] disabled:opacity-30 bg-brand-primary text-white hover:bg-brand-secondary shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                      >
+                        {isSubmitting ? (
+                        <>
+                          <Activity className="w-3.5 h-3.5 animate-pulse" />
+                            <span>{stepLabel[step]}</span>
+                        </>
+                        ) : (
+                          <span>{dmsEnabled ? "Commit & Arm" : "Secure Commit"}</span>
+                        )}
+                      </button>
+
+                      <p className="text-center text-[8px] font-mono text-text-muted uppercase tracking-widest">
+                        Protocol: NYAYA_HANDSHAKE_v4
+                      </p>
+                    </div>
+                  </div>
               </motion.form>
             </div>
           </div>

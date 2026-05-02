@@ -43,7 +43,7 @@ export function FeatureSection() {
           </span>
           <div className="h-px w-6 bg-brand-primary/30" />
         </div>
-        <h2 className="text-5xl md:text-7xl font-black tracking-tight text-text-main mb-6 uppercase leading-none">
+        <h2 className="text-5xl md:text-7xl font-heading font-black tracking-tight text-text-main mb-6 uppercase leading-none">
           Trusted <span className="text-transparent bg-clip-text bg-linear-to-r from-brand-primary to-brand-secondary">Infrastructure</span>
         </h2>
         <p className="text-text-muted max-w-xl font-normal">

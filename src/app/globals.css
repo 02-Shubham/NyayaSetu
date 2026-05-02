@@ -19,6 +19,12 @@
   }
 }
 
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-playfair), serif !important;
+  }
+}
+
 ::selection {
   background-color: rgba(37, 99, 235, 0.1);
   color: #1E40AF;

@@ -11,8 +11,8 @@ const NAV_LINKS = [
   { href: "/privacy", label: "Privacy Vault" },
   { href: "/submit", label: "Submit Case" },
   { href: "/ledger", label: "Public Ledger" },
-  { href: "/agency", label: "Agency Portal" },
-  { href: "http://localhost:3001", label: "Admin", external: true },
+  // { href: "/agency", label: "Agency Portal" },
+  // { href: "http://localhost:3001", label: "Admin", external: true },
 ];
 
 export function Navbar() {

@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Web3Provider } from "@/components/providers/Web3Provider";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
 });
 
 export const metadata: Metadata = {
@@ -20,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-bg-page text-text-main antialiased selection:bg-brand-primary/10 min-h-screen relative`}>
+      <body className={`${inter.className} ${inter.variable} ${playfair.variable} bg-bg-page text-text-main antialiased selection:bg-brand-primary/10 min-h-screen relative`}>
         {/* Persistent Global Background Layer */}
         <div className="fixed inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.02] pointer-events-none z-0" />
 
