@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "./wallet/ConnectButton";
 
-const NAV_LINKS = [
+const NAV_LINKS: { href: string; label: string; external?: boolean }[] = [
   { href: "/privacy", label: "Privacy Vault" },
   { href: "/submit", label: "Submit Case" },
   { href: "/ledger", label: "Public Ledger" },
