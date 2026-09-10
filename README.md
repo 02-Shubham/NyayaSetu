@@ -55,63 +55,91 @@ Reporting systemic corruption is inherently dangerous. Traditional reporting mec
 
 ---
 
-## 🚀 Getting Started (Developer Setup)
+## 🚀 Step-by-Step Startup Guide
 
-To run NyayaSetu locally on your machine, you will need to instantiate three distinct environments: the Local Blockchain Node, the Whistleblower App (Frontend), and the Admin App (Authority Panel).
+To run NyayaSetu locally on your machine, you will need to instantiate three distinct environments across separate terminal tabs: the Local Blockchain Node, the Whistleblower App (Frontend), and the Admin App (Authority Panel).
 
-### Prerequisites
-* Node.js (v18+)
-* npm or yarn
-* MetaMask browser extension (configured for Localhost 8545, Chain ID: 1337)
-* Pinata API Keys (for IPFS uploads)
-* Google Gemini API Key (for AI forensics)
+### 📋 Prerequisites & MetaMask Configuration
 
-### 1. Environment Variables Configuration
-You must create/configure `.env` (or `.env.local`) files in **both** the root directory and the `NyayaSetu-admin-master` directory with the following variables:
+1. **MetaMask Network Settings**:
+   - **Network Name**: `Localhost 8545`
+   - **New RPC URL**: `http://127.0.0.1:8545`
+   - **Chain ID**: `1337`
+   - **Currency Symbol**: `ETH`
 
-```env
-NEXT_PUBLIC_PINATA_API_KEY="your_pinata_api_key_here"
-NEXT_PUBLIC_PINATA_SECRET_API_KEY="your_pinata_secret_key_here"
-NEXT_PUBLIC_IPFS_GATEWAY="gateway.pinata.cloud"
-GEMINI_API_KEY="your_gemini_api_key_here"
-```
+2. **Import Hardhat Test Accounts into MetaMask**:
+   - **Deployer / Admin (Account #0)**:
+     - Private Key: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
+     - Address: `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`
+   - **Citizen / Whistleblower (Account #1)**:
+     - Private Key: `0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d`
 
-### 2. Bootstrapping the Blockchain Network
-Open a terminal and navigate to the `blockchain` directory.
+---
 
+### 1️⃣ Terminal 1: Start the Local Blockchain Node
 ```bash
 cd blockchain
-npm install
 npx hardhat node
 ```
-*⚠️ Keep this terminal running. This process simulates your local Ethereum network.*
+*⚠️ Keep this terminal running. This simulates the local Ethereum node.*
 
-In a **new terminal tab**, navigate back to `blockchain` and compile/deploy the smart contracts:
+---
+
+### 2️⃣ Terminal 2: Compile & Deploy Smart Contracts
+In a new terminal window:
 ```bash
 cd blockchain
 npx hardhat compile
 npx hardhat run scripts/deploy.cjs --network localhost
 ```
-*Note: This specific deployment script automatically updates the contract addresses in the `contracts/addresses.ts` files for both frontends.*
 
-### 3. Running the Whistleblower (Citizen) Application
-In a **new terminal tab**, navigate to the project root.
-
+*(Optional: deploy DeadMan switch & seed test data)*
 ```bash
-npm install
+npx hardhat run scripts/deploy-deadman.cjs --network localhost
+npx hardhat run scripts/register-test-agency.cjs --network localhost
+npx hardhat run scripts/seed-cases.cjs --network localhost
+```
+> 💡 **Note**: The deployment script automatically updates contract addresses in `.env.local` and `deployed-addresses.json`.
+
+---
+
+### 3️⃣ Terminal 3: Start the Main Whistleblower App (Port 3000)
+From the project root:
+```bash
+# If running for the first time or updating Prisma schema:
+npx prisma generate
+
+# Start the dev server
 npm run dev
 ```
-*The Whistleblower portal will now be available at `http://localhost:3000`.*
+🔗 **Main App URL**: [http://localhost:3000](http://localhost:3000)
 
-### 4. Running the Authority (Admin) Application
-In a **last terminal tab**, navigate to the admin directory.
+---
 
+### 4️⃣ Terminal 4: Start the Admin / Authority Portal (Port 3001)
+In a new terminal window:
 ```bash
 cd NyayaSetu-admin-master
-npm install
 npm run dev -- -p 3001
 ```
-*The Authority portal will now be available at `http://localhost:3001`.*
+🔗 **Admin Portal URL**: [http://localhost:3001](http://localhost:3001)
+
+---
+
+### ⚡ Quick-Start (TL;DR)
+
+| Terminal | Path | Command | URL / Purpose |
+| :--- | :--- | :--- | :--- |
+| **Terminal 1** | `blockchain/` | `npx hardhat node` | Local RPC: `http://127.0.0.1:8545` |
+| **Terminal 2** | `blockchain/` | `npx hardhat run scripts/deploy.cjs --network localhost` | Deploys Smart Contracts |
+| **Terminal 3** | Root `./` | `npm run dev` | Citizen Portal: `http://localhost:3000` |
+| **Terminal 4** | `NyayaSetu-admin-master/` | `npm run dev -- -p 3001` | Admin Portal: `http://localhost:3001` |
+
+---
+
+### 💡 Troubleshooting Tips
+* **MetaMask "Nonce too high" Error**: Whenever you restart the Hardhat node and redeploy, go to MetaMask: `Settings` → `Advanced` → `Clear activity tab data`.
+* **Database / Prisma Error**: If using Neon PostgreSQL database features, verify `DATABASE_URL` in `.env` and run `npx prisma db push`.
 
 ---
 
