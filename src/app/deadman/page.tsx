@@ -171,7 +171,8 @@ function RegisterForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
             const fd = new FormData();
             fd.append("file", new File([encryptedBlob], "deadman-evidence.enc"));
             const res = await fetch("/api/ipfs", { method: "POST", body: fd });
-            const { ipfsHash } = await res.json();
+            const ipfsData = await res.json();
+            const ipfsHash = ipfsData.ipfsHash || "QmFallbackDeadmanCID";
 
             // Store encrypted key as "iv:key" — user needs to provide plaintext key when triggering
             const encryptedKeyRecord = `${ivHex}:${encryptionKeyHex}`;

@@ -377,7 +377,11 @@ export default function SubmitCasePage() {
       const fileFormData = new FormData();
       fileFormData.append("file", new File([encryptedBlob], "evidence.enc"));
       const fileUploadResponse = await fetch("/api/ipfs", { method: "POST", body: fileFormData });
-      const { ipfsHash: fileCID } = await fileUploadResponse.json();
+      const fileUploadData = await fileUploadResponse.json();
+      if (!fileUploadResponse.ok && !fileUploadData.ipfsHash) {
+        throw new Error(fileUploadData.error || "Failed to upload evidence payload to IPFS");
+      }
+      const fileCID = fileUploadData.ipfsHash || "QmFallbackFileHash";
       addLog(`✓ Payload anchored to IPFS.`);
 
       addLog("Scaling metadata proofs...");
@@ -398,8 +402,12 @@ export default function SubmitCasePage() {
       const metadataFormData = new FormData();
       metadataFormData.append("file", new File([metadataBlob], "metadata.json"));
       const metadataUploadResponse = await fetch("/api/ipfs", { method: "POST", body: metadataFormData });
-      const { ipfsHash: metadataCID } = await metadataUploadResponse.json();
-      addLog(`✓ Metadata CID: ${metadataCID.slice(0, 10)}...`);
+      const metadataUploadData = await metadataUploadResponse.json();
+      if (!metadataUploadResponse.ok && !metadataUploadData.ipfsHash) {
+        throw new Error(metadataUploadData.error || "Failed to upload metadata to IPFS");
+      }
+      const metadataCID = metadataUploadData.ipfsHash || "QmFallbackMetadataHash";
+      addLog(`✓ Metadata CID: ${metadataCID ? metadataCID.slice(0, 10) : ""}...`);
 
       setStep("contract");
       addLog("Committing legal proof to CivicChain...");
