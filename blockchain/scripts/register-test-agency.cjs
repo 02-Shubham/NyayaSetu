@@ -18,7 +18,9 @@ async function main() {
     const addresses = JSON.parse(fs.readFileSync(addressesPath, "utf8"));
     const Registry = await hre.ethers.getContractAt("CivicChainRegistry", addresses.CivicChainRegistry);
 
-    const [admin, agency1] = await hre.ethers.getSigners();
+    const signers = await hre.ethers.getSigners();
+    const admin = signers[0];
+    const agency1 = signers[1] || admin;
     const department = "Police";
 
     // 1. Add as authorized agency (if not already)
