@@ -57,7 +57,7 @@ export default function LedgerPage() {
     useEffect(() => {
         setLeakedIds(getLeakedCases());
         // Also try fetching from admin panel
-        fetch('http://localhost:3001/api/leaked-cases')
+        fetch(`${process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3001'}/api/leaked-cases`)
             .then(r => r.json())
             .then(data => {
                 if (data.leakedIds?.length) {

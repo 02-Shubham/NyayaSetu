@@ -1,0 +1,14 @@
+NyayaSetu-admin-master
+blockchain/node_modules
+blockchain/circuits
+blockchain/cache
+blockchain/scripts
+blockchain/test
+blockchain/artifacts/build-info
+.next
+node_modules
+start.txt
+prisma/dev.db
+tsconfig.tsbuildinfo
+.env
+.env.local

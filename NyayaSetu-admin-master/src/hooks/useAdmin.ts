@@ -28,8 +28,11 @@ export function useAdmin() {
 
     // Check for admin/agency status with case-insensitivity
     // We only set isAdmin to false IF we have finished loading and the checks fail
-    // MODIFIED: Allow any connected wallet to be admin for demo purposes
-    const isAdmin = isConnected
+    // Only the registry admin or an authorized agency wallet may use the panel.
+    const isRegistryAdmin =
+        !!address && !!adminAddress &&
+        (adminAddress as string).toLowerCase() === address.toLowerCase()
+    const isAdmin = isConnected && (isRegistryAdmin || !!isAuthorizedAgency)
 
     // Log the current state for debugging if restricted on localhost
     useEffect(() => {

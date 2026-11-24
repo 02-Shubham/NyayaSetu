@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 
 // This endpoint serves leaked case IDs so the public ledger (port 3000) can show them
 // Leaked IDs are stored in a JSON file so they persist across restarts
 
-const LEAKED_FILE = path.join(process.cwd(), 'leaked-cases.json')
+const LEAKED_FILE = path.join(process.env.VERCEL ? os.tmpdir() : process.cwd(), 'leaked-cases.json')
 
 function getLeakedIds(): number[] {
     try {
@@ -17,7 +18,7 @@ function getLeakedIds(): number[] {
 }
 
 function saveLeakedIds(ids: number[]) {
-    fs.writeFileSync(LEAKED_FILE, JSON.stringify(ids))
+    try { fs.writeFileSync(LEAKED_FILE, JSON.stringify(ids)) } catch { }
 }
 
 export async function GET() {

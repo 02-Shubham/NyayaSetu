@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 
-const LEAKED_FILE = path.join(process.cwd(), 'leaked-cases.json')
+const LEAKED_FILE = path.join(process.env.VERCEL ? os.tmpdir() : process.cwd(), 'leaked-cases.json')
 function persistLeakedId(caseId: number) {
   let ids: number[] = []
   try { if (fs.existsSync(LEAKED_FILE)) ids = JSON.parse(fs.readFileSync(LEAKED_FILE, 'utf-8')); } catch { }
-  if (!ids.includes(caseId)) { ids.push(caseId); fs.writeFileSync(LEAKED_FILE, JSON.stringify(ids)); }
+  if (!ids.includes(caseId)) { ids.push(caseId); try { fs.writeFileSync(LEAKED_FILE, JSON.stringify(ids)); } catch { } }
 }
 
 function buildHtmlEmail(data: any) {
